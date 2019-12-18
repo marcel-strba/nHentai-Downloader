@@ -6,10 +6,7 @@
 
 using System;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Net;
-using System.Collections.Generic;
-using System.IO;
 
 namespace nHentai_Downloader
 {
@@ -76,7 +73,23 @@ namespace nHentai_Downloader
                 imageHTML = webClient.DownloadString(doujinURL + (i + 1) + "/");
                 MatchCollection imageMatch = imagePattern.Matches(imageHTML);
                 Console.WriteLine("Downloading: " + imageMatch[0].Value);
-                webClient.DownloadFile(imageMatch[0].Value, "./" + doujinID + "/" + i + GetExtension(imageMatch[0].Value));
+                try
+                {
+                    webClient.DownloadFile(imageMatch[0].Value, "./" + doujinID + "/" + i + GetExtension(imageMatch[0].Value));
+                }
+                catch(Exception x)
+                {
+                    try
+                    {
+                        Console.WriteLine("Error: Couldn't download image. Retrying...");
+                        webClient.DownloadFile(imageMatch[0].Value, "./" + doujinID + "/" + i + GetExtension(imageMatch[0].Value));
+                    }
+                    catch(Exception y)
+                    {
+                        Console.WriteLine("Error: Couldn't download image. Please check your internet connection or if nhentai is down.");
+                        break;
+                    }
+                }
             }
 
             Console.WriteLine("Done!");
