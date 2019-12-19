@@ -5,8 +5,8 @@
 */
 
 using System;
-using System.Text.RegularExpressions;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace nHentai_Downloader
 {
@@ -26,7 +26,7 @@ namespace nHentai_Downloader
             else if (ext.EndsWith(".webm"))
                 return ".webm";
             else
-                return "INVALID";
+                return null;
         }
         // A method that returns the page number based on the page count string
         static int PageCount(string pageMatch)
@@ -47,10 +47,10 @@ namespace nHentai_Downloader
             Regex imagePattern = new Regex("https://i.nhentai.net/galleries/([a-zA-Z0-9\\/\\.]*)?", RegexOptions.IgnoreCase);
             Regex namePattern = new Regex("content=([a-zA-Z0-9\\ \\\"\\-]*)", RegexOptions.IgnoreCase);
 
-            string galleryTemplate = "https://nhentai.net/g/";
-            string imageHTML;
+            const string galleryTemplate = "https://nhentai.net/g/";
+            string imageHTML, imageURL;
 
-            // Getting user input and generating a gallery URL.
+            // Getting user input and generating a gallery URL
             Console.WriteLine("Enter a doujin ID: ");
             string doujinID = Console.ReadLine();
             string doujinURL = galleryTemplate + doujinID + "/";
@@ -64,6 +64,12 @@ namespace nHentai_Downloader
             Console.WriteLine("Title: " + GetTitle(name[1].Value));
             Console.WriteLine(pageMatch[0].Value);
 
+            // User confirmation before downloading the gallery
+            Console.WriteLine("Continue? (Press Q to cancel.)");
+            ConsoleKeyInfo input =Console.ReadKey(true);
+            if (input.Key.ToString() == "Q")
+                goto EndPoint;
+
             // Creating a directory with the gallery ID as the name
             System.IO.Directory.CreateDirectory("./" + doujinID + "/");
 
@@ -72,19 +78,20 @@ namespace nHentai_Downloader
             {
                 imageHTML = webClient.DownloadString(doujinURL + (i + 1) + "/");
                 MatchCollection imageMatch = imagePattern.Matches(imageHTML);
-                Console.WriteLine("Downloading: " + imageMatch[0].Value);
+                imageURL = imageMatch[0].Value;
+                Console.WriteLine("Downloading: " + imageURL);
                 try
                 {
-                    webClient.DownloadFile(imageMatch[0].Value, "./" + doujinID + "/" + i + GetExtension(imageMatch[0].Value));
+                    webClient.DownloadFile(imageURL, "./" + doujinID + "/" + i + GetExtension(imageURL));
                 }
-                catch(Exception x)
+                catch (Exception)
                 {
                     try
                     {
                         Console.WriteLine("Error: Couldn't download image. Retrying...");
-                        webClient.DownloadFile(imageMatch[0].Value, "./" + doujinID + "/" + i + GetExtension(imageMatch[0].Value));
+                        webClient.DownloadFile(imageURL, "./" + doujinID + "/" + i + GetExtension(imageURL));
                     }
-                    catch(Exception y)
+                    catch (Exception)
                     {
                         Console.WriteLine("Error: Couldn't download image. Please check your internet connection or if nhentai is down.");
                         break;
@@ -92,7 +99,8 @@ namespace nHentai_Downloader
                 }
             }
 
-            Console.WriteLine("Done!");
+            EndPoint:
+            Console.WriteLine("Done! Press any key to quit.");
             Console.ReadKey();
         }
     }
