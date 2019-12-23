@@ -45,15 +45,26 @@ namespace nHentai_Downloader
             WebClient webClient = new WebClient();
             Regex pagePattern = new Regex("[\\0-9]* pages");
             Regex imagePattern = new Regex("https://i.nhentai.net/galleries/([a-zA-Z0-9\\/\\.]*)?", RegexOptions.IgnoreCase);
-            Regex namePattern = new Regex("content=([a-zA-Z0-9\\ \\\"\\-]*)", RegexOptions.IgnoreCase);
+            Regex namePattern = new Regex("content=([a-zA-Z0-9\\ \\\"\\-\\]]*)", RegexOptions.IgnoreCase);
 
             const string galleryTemplate = "https://nhentai.net/g/";
-            string imageHTML, imageURL;
+            string imageHTML, imageURL, imageExtension;
 
             // Getting user input and generating a gallery URL
             Console.WriteLine("Enter a doujin ID: ");
             string doujinID = Console.ReadLine();
             string doujinURL = galleryTemplate + doujinID + "/";
+
+            // Checking if the user input is valid
+            try
+            {
+                int.TryParse(doujinID, out int temp);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Error: Invalid input!");
+                goto EndPoint;
+            }
 
             // Downloading the gallery HTML and finding the name and page count
             string galleryHTML = webClient.DownloadString(doujinURL);
@@ -74,22 +85,23 @@ namespace nHentai_Downloader
             System.IO.Directory.CreateDirectory("./" + doujinID + "/");
 
             // Finding and downloading all the images from the gallery
-            for (int i = 0; i < PageCount(pageMatch[0].Value); i++)
+            for (int currentPage = 1; currentPage <= PageCount(pageMatch[0].Value); currentPage++)
             {
-                imageHTML = webClient.DownloadString(doujinURL + (i + 1) + "/");
+                imageHTML = webClient.DownloadString(doujinURL + (currentPage) + "/");
                 MatchCollection imageMatch = imagePattern.Matches(imageHTML);
                 imageURL = imageMatch[0].Value;
+                imageExtension = GetExtension(imageURL);
                 Console.WriteLine("Downloading: " + imageURL);
                 try
                 {
-                    webClient.DownloadFile(imageURL, "./" + doujinID + "/" + i + GetExtension(imageURL));
+                    webClient.DownloadFile(imageURL, "./" + doujinID + "/" + currentPage + imageExtension);
                 }
                 catch (Exception)
                 {
                     try
                     {
                         Console.WriteLine("Error: Couldn't download image. Retrying...");
-                        webClient.DownloadFile(imageURL, "./" + doujinID + "/" + i + GetExtension(imageURL));
+                        webClient.DownloadFile(imageURL, "./" + doujinID + "/" + currentPage + imageExtension);
                     }
                     catch (Exception)
                     {
