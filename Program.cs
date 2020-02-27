@@ -83,7 +83,7 @@ namespace nHentai_Downloader
                 goto EndPoint;
 
             // Creating a directory with the gallery ID as the name
-            System.IO.Directory.CreateDirectory("./" + doujinID + "/");
+            System.IO.Directory.CreateDirectory($"./{title}({doujinID})/");
 
             // Finding and downloading all the images from the gallery
             for (int currentPage = 1; currentPage <= PageCount(pageMatch[0].Value); currentPage++)
@@ -95,14 +95,14 @@ namespace nHentai_Downloader
                 Console.WriteLine("Downloading: " + imageURL);
                 try
                 {
-                    webClient.DownloadFile(imageURL, "./" + title + "(" + doujinID + ")" + "/" + currentPage + imageExtension);
+                    webClient.DownloadFile(imageURL, $"./{title}({doujinID})/{currentPage}{imageExtension}");
                 }
                 catch (Exception)
                 {
                     try
                     {
                         Console.WriteLine("Error: Couldn't download image. Retrying...");
-                        webClient.DownloadFile(imageURL, "./" + title + "(" + doujinID + ")" + "/" + currentPage + imageExtension);
+                        webClient.DownloadFile(imageURL, $"./{title}({doujinID})/{currentPage}{imageExtension}");
                     }
                     catch (Exception)
                     {
