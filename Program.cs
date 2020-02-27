@@ -69,10 +69,11 @@ namespace nHentai_Downloader
             // Downloading the gallery HTML and finding the name and page count
             string galleryHTML = webClient.DownloadString(doujinURL);
             MatchCollection name = namePattern.Matches(galleryHTML);
+            string title = GetTitle(name[1].Value);
             MatchCollection pageMatch = pagePattern.Matches(galleryHTML);
 
             // Outputing the gallery title and page count
-            Console.WriteLine("Title: " + GetTitle(name[1].Value));
+            Console.WriteLine("Title: " + title);
             Console.WriteLine(pageMatch[0].Value);
 
             // User confirmation before downloading the gallery
@@ -94,14 +95,14 @@ namespace nHentai_Downloader
                 Console.WriteLine("Downloading: " + imageURL);
                 try
                 {
-                    webClient.DownloadFile(imageURL, "./" + doujinID + "/" + currentPage + imageExtension);
+                    webClient.DownloadFile(imageURL, "./" + title + "(" + doujinID + ")" + "/" + currentPage + imageExtension);
                 }
                 catch (Exception)
                 {
                     try
                     {
                         Console.WriteLine("Error: Couldn't download image. Retrying...");
-                        webClient.DownloadFile(imageURL, "./" + doujinID + "/" + currentPage + imageExtension);
+                        webClient.DownloadFile(imageURL, "./" + title + "(" + doujinID + ")" + "/" + currentPage + imageExtension);
                     }
                     catch (Exception)
                     {
