@@ -17,13 +17,13 @@ namespace nHentai_Downloader
         {
             if (ext.EndsWith(".jpeg"))
                 return ".jpeg";
-            else if (ext.EndsWith(".jpg"))
+            if (ext.EndsWith(".jpg"))
                 return ".jpg";
-            else if (ext.EndsWith(".png"))
+            if (ext.EndsWith(".png"))
                 return ".png";
-            else if (ext.EndsWith(".gif"))
+            if (ext.EndsWith(".gif"))
                 return ".gif";
-            else if (ext.EndsWith(".webm"))
+            if (ext.EndsWith(".webm"))
                 return ".webm";
             else
                 return null;
@@ -31,27 +31,55 @@ namespace nHentai_Downloader
         // A method that returns the page number based on the page count string
         static int PageCount(string pageMatch)
         {
-            string[] pageString = pageMatch.Split(' ');
-            return Convert.ToInt32(pageString[0]);
+            string pageString = Regex.Replace(pageMatch, "[^0-9]", "");
+            return Convert.ToInt32(pageString);
         }
         // A method that returns the gallery title based on the title string
         static string GetTitle(string nameMatch)
         {
-            int titleLength = nameMatch.Length;
-            return nameMatch.Substring(9, titleLength - 11);
+            return nameMatch.Substring(9, nameMatch.Length - 11);
+        }
+        // A method that downloads all images in the gallery into the output folder and handles
+        // failed image downloads.
+        static bool DownloadGallery(string imageURL, string outputPath, WebClient webClient)
+        {
+            try
+            {
+                webClient.DownloadFile(imageURL, outputPath);
+                return true;
+            }
+            catch(Exception)
+            {
+                Console.WriteLine("ERROR: Could not download image! What would you like to do?\n" +
+                    "Enter - Ignore image\n" +
+                    "R - Retry\n" +
+                    "Q - Quit");
+                ConsoleKeyInfo key = Console.ReadKey(true);
+                switch(key.Key.ToString())
+                {
+                    case "R":
+                        DownloadGallery(imageURL, outputPath, webClient);
+                        return true;
+                    case "Q":
+                        return false;
+                    default:
+                        return true;
+                }
+            }
         }
         static void Main(string[] args)
         {
             WebClient webClient = new WebClient();
-            Regex pagePattern = new Regex("[\\0-9]* pages");
+            Regex pagePattern = new Regex("class=\"name\">[\\0-9]*<");
             Regex imagePattern = new Regex("https://i.nhentai.net/galleries/([a-zA-Z0-9\\/\\.]*)?", RegexOptions.IgnoreCase);
             Regex namePattern = new Regex("content=([a-zA-Z0-9\\ \\\"\\-\\]]*)", RegexOptions.IgnoreCase);
 
             const string galleryTemplate = "https://nhentai.net/g/";
-            string imageHTML, imageURL, imageExtension;
+            string imageURLBase;
+            string imageURL;
 
             // Getting user input and generating a gallery URL
-            Console.WriteLine("Enter a doujin ID: ");
+            Console.WriteLine("Enter doujin ID: ");
             string doujinID = Console.ReadLine();
             string doujinURL = galleryTemplate + doujinID + "/";
 
@@ -62,7 +90,7 @@ namespace nHentai_Downloader
             }
             catch (Exception)
             {
-                Console.WriteLine("Error: Invalid input!");
+                Console.WriteLine("ERROR: Invalid input!");
                 goto EndPoint;
             }
 
@@ -74,7 +102,7 @@ namespace nHentai_Downloader
 
             // Outputing the gallery title and page count
             Console.WriteLine("Title: " + title);
-            Console.WriteLine(pageMatch[0].Value);
+            Console.WriteLine($"{PageCount(pageMatch[0].Value)} pages");
 
             // User confirmation before downloading the gallery
             Console.WriteLine("Continue? (Press Q to cancel.)");
@@ -82,36 +110,23 @@ namespace nHentai_Downloader
             if (input.Key.ToString() == "Q")
                 goto EndPoint;
 
-            // Creating a directory with the gallery ID as the name
+            // Creating a directory with the doujin title and ID in brackets as name.
             System.IO.Directory.CreateDirectory($"./{title}({doujinID})/");
+
+            // Getting the base of the image URL.
+            MatchCollection imageMatch = imagePattern.Matches(webClient.DownloadString(doujinURL + (1) + "/"));
+            imageURLBase = imageMatch[0].Value;
 
             // Finding and downloading all the images from the gallery
             for (int currentPage = 1; currentPage <= PageCount(pageMatch[0].Value); currentPage++)
             {
-                imageHTML = webClient.DownloadString(doujinURL + (currentPage) + "/");
-                MatchCollection imageMatch = imagePattern.Matches(imageHTML);
-                imageURL = imageMatch[0].Value;
-                imageExtension = GetExtension(imageURL);
+                imageURL = Regex.Replace(imageURLBase, "[0-9]\\.", $"{currentPage}.");
                 Console.WriteLine("Downloading: " + imageURL);
-                try
-                {
-                    webClient.DownloadFile(imageURL, $"./{title}({doujinID})/{currentPage}{imageExtension}");
-                }
-                catch (Exception)
-                {
-                    try
-                    {
-                        Console.WriteLine("Error: Couldn't download image. Retrying...");
-                        webClient.DownloadFile(imageURL, $"./{title}({doujinID})/{currentPage}{imageExtension}");
-                    }
-                    catch (Exception)
-                    {
-                        Console.WriteLine("Error: Couldn't download image. Please check your internet connection or if nhentai is down.");
-                        break;
-                    }
-                }
+                string outputPath = $"./{title}({doujinID})/{currentPage}{GetExtension(imageURL)}";
+                if (!DownloadGallery(imageURL, outputPath, webClient))
+                    break;
             }
-
+            
             EndPoint:
             Console.WriteLine("Done! Press any key to quit.");
             Console.ReadKey();
