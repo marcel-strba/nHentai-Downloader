@@ -69,6 +69,8 @@ namespace nHentai_Downloader
         }
         static void Main(string[] args)
         {
+            string executablePath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+
             WebClient webClient = new WebClient();
             Regex pagePattern = new Regex("class=\"name\">[\\0-9]*<");
             Regex imagePattern = new Regex("https://i.nhentai.net/galleries/([a-zA-Z0-9\\/\\.]*)?", RegexOptions.IgnoreCase);
@@ -119,7 +121,7 @@ namespace nHentai_Downloader
                 goto EndPoint;
 
             // Creating a directory with the doujin title and ID in brackets as name.
-            System.IO.Directory.CreateDirectory($"./{title}({doujinID})/");
+            System.IO.Directory.CreateDirectory($"{executablePath}/{title}({doujinID})/");
 
             // Getting the base of the image URL and image extension.
             MatchCollection imageMatch = imagePattern.Matches(webClient.DownloadString(doujinURL + (1) + "/"));
@@ -132,7 +134,7 @@ namespace nHentai_Downloader
                 imageURL = Regex.Replace(imageURLBase, "[0-9]\\.", $"{currentPage}.");
                 Console.SetCursorPosition(0, Console.CursorTop);
                 Console.Write($"Progress: {currentPage}/{PageCount(pageMatch[0].Value)}");
-                string outputPath = $"./{title}({doujinID})/{currentPage}{extension}";
+                string outputPath = $"{executablePath}\\{title}({doujinID})\\{currentPage}{extension}";
                 if (!DownloadGallery(imageURL, outputPath, webClient))
                     break;
             }
