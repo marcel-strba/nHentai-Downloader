@@ -95,12 +95,18 @@ namespace nHentai_Downloader
             {
                 if (args[1] == "-s" || args[1] == "-S")
                 {
+                    if (args[2].StartsWith("\""))
+                        args[1] = args[1].Replace("\"", String.Empty);
+
                     executablePath += $"\\{args[2]}";
                     doujinID = args[0];
                     doujinURL = galleryTemplate + doujinID + "/";
                 }
                 else if (args[1] == "-o" || args[1] == "-O")
                 {
+                    if (args[2].StartsWith("\""))
+                        args[1] = args[1].Replace("\"", String.Empty);
+
                     executablePath = args[2];
                     doujinID = args[0];
                     doujinURL = galleryTemplate + doujinID + "/";
