@@ -86,11 +86,35 @@ namespace nHentai_Downloader
                 doujinID = Console.ReadLine();
                 doujinURL = galleryTemplate + doujinID + "/";
             }
-            else
+            else if (args.Length == 1)
             {
-                Console.WriteLine("\n");
                 doujinID = args[0];
                 doujinURL = galleryTemplate + doujinID + "/";
+            }
+            else if (args.Length == 3)
+            {
+                if (args[1] == "-s" || args[1] == "-S")
+                {
+                    executablePath += $"\\{args[2]}";
+                    doujinID = args[0];
+                    doujinURL = galleryTemplate + doujinID + "/";
+                }
+                else if (args[1] == "-o" || args[1] == "-O")
+                {
+                    executablePath = args[2];
+                    doujinID = args[0];
+                    doujinURL = galleryTemplate + doujinID + "/";
+                }
+                else
+                {
+                    Console.WriteLine($"Invalid argument: {args[1]}");
+                    return;
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Invalid amount of arguments");
+                return;
             }
 
             // Checking if the user input is valid
