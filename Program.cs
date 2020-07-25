@@ -23,8 +23,8 @@ namespace nHentai_Downloader
                 return ".png";
             if (ext.EndsWith(".gif"))
                 return ".gif";
-            if (ext.EndsWith(".webm"))
-                return ".webm";
+            if (ext.EndsWith(".webp"))
+                return ".webp";
             else
                 return null;
         }
@@ -75,13 +75,21 @@ namespace nHentai_Downloader
             Regex namePattern = new Regex("content=([a-zA-Z0-9\\ \\\"\\-\\]]*)", RegexOptions.IgnoreCase);
 
             const string galleryTemplate = "https://nhentai.net/g/";
-            string imageURLBase;
-            string imageURL;
+            string imageURLBase, imageURL, extension, doujinID, doujinURL;
 
             // Getting user input and generating a gallery URL
-            Console.WriteLine("Enter doujin ID: ");
-            string doujinID = Console.ReadLine();
-            string doujinURL = galleryTemplate + doujinID + "/";
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Enter doujin ID: ");
+                doujinID = Console.ReadLine();
+                doujinURL = galleryTemplate + doujinID + "/";
+            }
+            else
+            {
+                Console.WriteLine("\n");
+                doujinID = args[0];
+                doujinURL = galleryTemplate + doujinID + "/";
+            }
 
             // Checking if the user input is valid
             try
@@ -113,16 +121,18 @@ namespace nHentai_Downloader
             // Creating a directory with the doujin title and ID in brackets as name.
             System.IO.Directory.CreateDirectory($"./{title}({doujinID})/");
 
-            // Getting the base of the image URL.
+            // Getting the base of the image URL and image extension.
             MatchCollection imageMatch = imagePattern.Matches(webClient.DownloadString(doujinURL + (1) + "/"));
             imageURLBase = imageMatch[0].Value;
+            extension = GetExtension(imageURLBase);
 
             // Finding and downloading all the images from the gallery
             for (int currentPage = 1; currentPage <= PageCount(pageMatch[0].Value); currentPage++)
             {
                 imageURL = Regex.Replace(imageURLBase, "[0-9]\\.", $"{currentPage}.");
-                Console.WriteLine("Downloading: " + imageURL);
-                string outputPath = $"./{title}({doujinID})/{currentPage}{GetExtension(imageURL)}";
+                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.Write($"Progress: {currentPage}/{PageCount(pageMatch[0].Value)}");
+                string outputPath = $"./{title}({doujinID})/{currentPage}{extension}";
                 if (!DownloadGallery(imageURL, outputPath, webClient))
                     break;
             }
