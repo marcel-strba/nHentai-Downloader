@@ -147,24 +147,23 @@ namespace nHentai_Downloader
             // Creating a directory with the doujin title and ID in brackets as name.
             System.IO.Directory.CreateDirectory($"{executablePath}/{title}({doujinID})/");
 
-            // Getting the base of the image URL and image extension.
-            MatchCollection imageMatch = imagePattern.Matches(webClient.DownloadString(doujinURL + (1) + "/"));
-            imageURLBase = imageMatch[0].Value;
-            extension = GetExtension(imageURLBase);
-
             // Finding and downloading all the images from the gallery
+            MatchCollection imageMatch;
             for (int currentPage = 1; currentPage <= PageCount(pageMatch[0].Value); currentPage++)
             {
-                imageURL = Regex.Replace(imageURLBase, "[0-9]\\.", $"{currentPage}.");
+                imageMatch = imagePattern.Matches(webClient.DownloadString(doujinURL + (currentPage) + "/"));
+                imageURLBase = imageMatch[0].Value;
+                extension = GetExtension(imageURLBase);
+                //imageURL = Regex.Replace(imageURLBase, "[0-9]\\.", $"{currentPage}.");
                 Console.SetCursorPosition(0, Console.CursorTop);
                 Console.Write($"Progress: {currentPage}/{PageCount(pageMatch[0].Value)}");
                 string outputPath = $"{executablePath}\\{title}({doujinID})\\{currentPage}{extension}";
-                if (!DownloadGallery(imageURL, outputPath, webClient))
+                if (!DownloadGallery(imageURLBase, outputPath, webClient))
                     break;
             }
             
             EndPoint:
-            Console.WriteLine("Done! Press any key to quit.");
+            Console.WriteLine("\nDone! Press any key to quit.");
             Console.ReadKey();
         }
     }
